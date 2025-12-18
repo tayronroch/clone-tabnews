@@ -1,11 +1,8 @@
 services:
   database:
     image: postgres:16-.alpine3.18
-    environment:
-      POSTGRES_PASSWORD: process.env.DB_PASSWORD
-      POSTGRES_USER: process.env.DB_USER
-      POSTGRES_DB: process.env.DB_NAME
-      POSTGRES_PORT: process.env.DB_PORT
+    env_file:
+      - ../env.development
     volumes:
       - db_data:/var/lib/postgresql/data
     ports:
