@@ -5,17 +5,33 @@ let pool;
 function getPool() {
   if (!pool) {
     console.log("Criando pool do Postgres...");
-    pool = new Pool({
-      host: process.env.POSTGRES_HOST,
-      port: process.env.POSTGRES_PORT,
-      user: process.env.POSTGRES_USER,
-      database: process.env.POSTGRES_DB,
-      password: process.env.POSTGRES_PASSWORD,
-      ssl: getSSLValues(),
-    });
+    pool = new Pool(getPoolConfig());
   }
 
   return pool;
+}
+
+function getPoolConfig() {
+  const connectionString = process.env.DATABASE_URL;
+  const ssl = getSSLValues();
+
+  if (connectionString) {
+    console.log("Usando DATABASE_URL para conectar ao Postgres.");
+    const config = { connectionString };
+    if (ssl) {
+      config.ssl = ssl;
+    }
+    return config;
+  }
+
+  return {
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT,
+    user: process.env.POSTGRES_USER,
+    database: process.env.POSTGRES_DB,
+    password: process.env.POSTGRES_PASSWORD,
+    ssl,
+  };
 }
 
 function getSSLValues() {
@@ -45,14 +61,7 @@ async function query(queryObject) {
 }
 
 async function getNewClient() {
-  const client = new Client({
-    host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT,
-    user: process.env.POSTGRES_USER,
-    database: process.env.POSTGRES_DB,
-    password: process.env.POSTGRES_PASSWORD,
-    ssl: getSSLValues(),
-  });
+  const client = new Client(getPoolConfig());
 
   await client.connect();
   return client;
