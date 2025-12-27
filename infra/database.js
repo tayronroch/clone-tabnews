@@ -4,6 +4,7 @@ let pool;
 
 function getPool() {
   if (!pool) {
+    console.log("Criando pool do Postgres...");
     pool = new Pool({
       host: process.env.POSTGRES_HOST,
       port: process.env.POSTGRES_PORT,
