@@ -14,8 +14,8 @@
     "lint:eslint:fix": "eslint --fix .",
     "lint:check": "npm run lint:prettier:check && npm run lint:eslint:check",
     "lint:fix": "npm run lint:prettier:fix && npm run lint:eslint:fix",
-    "test": "jest",
-    "test:watch": "jest --watchAll",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watchAll --runInBand",
     "migration:create": "node-pg-migrate -m infra/migrations create",
     "migration:up": "node-pg-migrate -m infra/migrations --envPath .env.development up",
     "migration:down": "node-pg-migrate -m infra/migrations --envPath .env.development down"
@@ -24,6 +24,7 @@
   "license": "MIT",
   "dependencies": {
     "dotenv": "^16.4.4",
+    "dotenv-expand": "^11.0.6",
     "next": "^13.1.6",
     "node-pg-migrate": "^6.2.2",
     "pg": "^8.16.3",

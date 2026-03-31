@@ -12,12 +12,13 @@ function getPool() {
 }
 
 function getPoolConfig() {
-  const connectionString = process.env.DATABASE_URL;
+  const connectionString = getConnectionString();
   const ssl = getSSLValues();
+  const allowExitOnIdle = process.env.NODE_ENV === "test";
 
   if (connectionString) {
     console.log("Usando DATABASE_URL para conectar ao Postgres.");
-    const config = { connectionString };
+    const config = { connectionString, allowExitOnIdle };
     if (ssl) {
       config.ssl = ssl;
     }
@@ -25,6 +26,7 @@ function getPoolConfig() {
   }
 
   return {
+    allowExitOnIdle,
     host: process.env.POSTGRES_HOST,
     port: process.env.POSTGRES_PORT,
     user: process.env.POSTGRES_USER,
@@ -34,7 +36,33 @@ function getPoolConfig() {
   };
 }
 
+function getConnectionString() {
+  const connectionString = process.env.DATABASE_URL;
+
+  if (!connectionString || process.env.NODE_ENV === "production") {
+    return connectionString;
+  }
+
+  try {
+    const databaseUrl = new URL(connectionString);
+
+    ["ssl", "sslmode", "sslcert", "sslkey", "sslrootcert", "sslaccept"].forEach(
+      (parameter) => {
+        databaseUrl.searchParams.delete(parameter);
+      }
+    );
+
+    return databaseUrl.toString();
+  } catch {
+    return connectionString;
+  }
+}
+
 function getSSLValues() {
+  if (process.env.NODE_ENV !== "production") {
+    return false;
+  }
+
   if (process.env.POSTGRES_CA) {
     return { ca: process.env.POSTGRES_CA };
   }
@@ -47,7 +75,7 @@ function getSSLValues() {
 }
 
 async function query(queryObject) {
-  // SEGURANCA: Evite strings interpoladas; prefira queries parametrizadas.
+  // Usa um cliente do pool para executar a query
   const client = await getPool().connect();
   try {
     const result = await client.query(queryObject);
@@ -59,7 +87,7 @@ async function query(queryObject) {
     client.release();
   }
 }
-
+// Cria um novo cliente do Postgres e conecta-se a ele
 async function getNewClient() {
   const client = new Client(getPoolConfig());
 
@@ -77,7 +105,18 @@ async function withClient(callback) {
   }
 }
 
+async function closePool() {
+  if (!pool) {
+    return;
+  }
+
+  const currentPool = pool;
+  pool = undefined;
+  await currentPool.end();
+}
+
 const database = {
+  closePool,
   query,
   getNewClient,
   withClient,
