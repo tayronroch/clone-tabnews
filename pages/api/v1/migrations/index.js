@@ -3,6 +3,13 @@ import { join } from "node:path";
 import database from "infra/database";
 
 export default async function migrations(request, response) {
+  const allowedMethods = ["GET", "POST"];
+
+  if (!allowedMethods.includes(request.method)) {
+    response.setHeader("Allow", allowedMethods);
+    return response.status(405).json({ error: "Method not allowed" });
+  }
+
   const dbClient = await database.getNewClient();
 
   try {
@@ -12,7 +19,6 @@ export default async function migrations(request, response) {
       direction: "up",
       verbose: true,
       migrationsTable: "migrations",
-      noLock: true,
     };
 
     if (request.method === "GET") {
@@ -30,19 +36,17 @@ export default async function migrations(request, response) {
         dryRun: false,
       });
 
-      if (result.length > 0) {
-        return response.status(201).json(result);
-      }
-
-      return response.status(200).json(result);
+      return response.status(result.length > 0 ? 201 : 200).json(result);
     }
-
-    return response.status(405).json({ error: "Method not allowed" });
   } catch (error) {
     console.error("Erro na rota de migrations:", error);
-    return response
-      .status(500)
-      .json({ error: error.message, stack: error.stack });
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+    return response.status(500).json({
+      error: isProduction ? "Internal server error" : error.message,
+      ...(isProduction ? {} : { stack: error.stack }),
+    });
   } finally {
     await dbClient.end();
   }
