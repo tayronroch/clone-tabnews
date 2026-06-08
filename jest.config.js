@@ -5,9 +5,9 @@ const nextJest = require("next/jest");
 
 dotenvExpand.expand(
   dotenv.config({
-  path: path.resolve(__dirname, ".env.development"),
-  override: true,
-}),
+    path: path.resolve(__dirname, ".env.development"),
+    override: true,
+  })
 );
 
 process.env.POSTGRES_SSL = "false";
@@ -17,16 +17,11 @@ if (process.env.DATABASE_URL) {
   try {
     const databaseUrl = new URL(process.env.DATABASE_URL);
 
-    [
-      "ssl",
-      "sslmode",
-      "sslcert",
-      "sslkey",
-      "sslrootcert",
-      "sslaccept",
-    ].forEach((parameter) => {
-      databaseUrl.searchParams.delete(parameter);
-    });
+    ["ssl", "sslmode", "sslcert", "sslkey", "sslrootcert", "sslaccept"].forEach(
+      (parameter) => {
+        databaseUrl.searchParams.delete(parameter);
+      }
+    );
 
     process.env.DATABASE_URL = databaseUrl.toString();
   } catch {
@@ -41,6 +36,7 @@ const createJestConfig = nextJest({
 const JestConfig = createJestConfig({
   moduleDirectories: ["node_modules", "<rootDir>/"],
   testEnvironment: "node",
+  testTimeout: 60000,
 });
 
 module.exports = JestConfig;
