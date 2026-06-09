@@ -19,3 +19,15 @@ jobs:
 
       - run: npm ci
       - run: npm run lint:prettier:check
+  eslint:
+    name: Eslint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+
+      - run: npm ci
+      - run: npm run lint:eslint:check
