@@ -4,8 +4,9 @@
   "description": "Implementação do https://tabnews.com.br para o https://curso.dev",
   "main": "index.js",
   "scripts": {
-    "dev": "npm run services:up && npm run services:wait:database && npm run migrations:up && next dev",
+    "dev": "npm run services:up && npm run services:wait:database && npm run migrations:up && node infra/scripts/dev.js",
     "test": "npm run services:up && concurrently -n next,jest --hide -k -s command-jest \"next dev\" \"jest --runInBand --verbose\"",
+    "posttest": "npm run services:down",
     "lint:check": "npm run lint:prettier:check && npm run lint:eslint:check && npm run lint:secretlint:check",
     "lint:fix": "npm run lint:prettier:fix && npm run lint:eslint:fix",
     "services:up": "docker compose -f infra/compose.yaml up -d",
