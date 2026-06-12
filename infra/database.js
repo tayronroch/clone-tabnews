@@ -49,7 +49,7 @@ function getConnectionString() {
     ["ssl", "sslmode", "sslcert", "sslkey", "sslrootcert", "sslaccept"].forEach(
       (parameter) => {
         databaseUrl.searchParams.delete(parameter);
-      }
+      },
     );
 
     return databaseUrl.toString();

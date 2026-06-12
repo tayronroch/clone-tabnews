@@ -3,7 +3,7 @@ const { exec } = require("node:child_process");
 function checkPostgres() {
   exec(
     "docker exec clone-tabnews-db pg_isready --host localhost",
-    handleResult
+    handleResult,
   );
 
   function handleResult(error, stdout) {

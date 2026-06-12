@@ -7,7 +7,7 @@ dotenvExpand.expand(
   dotenv.config({
     path: path.resolve(__dirname, ".env.development"),
     override: true,
-  })
+  }),
 );
 
 process.env.POSTGRES_SSL = "false";
@@ -20,7 +20,7 @@ if (process.env.DATABASE_URL) {
     ["ssl", "sslmode", "sslcert", "sslkey", "sslrootcert", "sslaccept"].forEach(
       (parameter) => {
         databaseUrl.searchParams.delete(parameter);
-      }
+      },
     );
 
     process.env.DATABASE_URL = databaseUrl.toString();
