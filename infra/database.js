@@ -4,7 +4,6 @@ let pool;
 
 function getPool() {
   if (!pool) {
-    console.log("Criando pool do Postgres...");
     pool = new Pool(getPoolConfig());
   }
 
@@ -17,7 +16,6 @@ function getPoolConfig() {
   const allowExitOnIdle = process.env.NODE_ENV === "test";
 
   if (connectionString) {
-    console.log("Usando DATABASE_URL para conectar ao Postgres.");
     const config = { connectionString, allowExitOnIdle };
     if (ssl) {
       config.ssl = ssl;
@@ -49,7 +47,7 @@ function getConnectionString() {
     ["ssl", "sslmode", "sslcert", "sslkey", "sslrootcert", "sslaccept"].forEach(
       (parameter) => {
         databaseUrl.searchParams.delete(parameter);
-      }
+      },
     );
 
     return databaseUrl.toString();
