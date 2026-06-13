@@ -21,7 +21,7 @@ async function waitForAllServices() {
 
 async function clearDatabase() {
   await database.query(
-    "drop schema if exists public cascade; create schema public;"
+    "drop schema if exists public cascade; create schema public;",
   );
 }
 

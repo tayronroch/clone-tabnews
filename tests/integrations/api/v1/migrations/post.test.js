@@ -17,7 +17,7 @@ describe("POST /api/v1/migrations", () => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({}),
-          }
+          },
         );
 
         expect(response1.status).toBe(201);
@@ -36,7 +36,7 @@ describe("POST /api/v1/migrations", () => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({}),
-          }
+          },
         );
 
         expect(response2.status).toBe(200);
