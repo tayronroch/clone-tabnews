@@ -32,22 +32,25 @@ function DatabaseStatus() {
   const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
     refreshInterval: 2000,
   });
+  let DatabaseStatusInformation = "Carregando...";
 
-  if (isLoading || !data) {
-    return <p>Carregando dados do banco de dados...</p>;
+  if (!isLoading && data) {
+    DatabaseStatusInformation = (
+      <>
+        <div>Versão: {data.dependencies.database.version}</div>
+        <div>
+          Conexões ativas: {data.dependencies.database.active_connections}
+        </div>
+        <div>
+          Conexões máximas: {data.dependencies.database.max_connections}
+        </div>
+      </>
+    );
   }
-
-  const { version, max_connections, opened_connections } =
-    data.dependencies.database;
-
   return (
-    <>
+    <div>
       <h2>Banco de Dados</h2>
-      <ul>
-        <li>Versão: {version}</li>
-        <li>Conexões Máximas: {max_connections}</li>
-        <li>Conexões Abertas: {opened_connections}</li>
-      </ul>
-    </>
+      {isLoading ? <p>Carregando...</p> : DatabaseStatusInformation}
+    </div>
   );
 }
