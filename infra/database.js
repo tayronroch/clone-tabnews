@@ -73,19 +73,19 @@ function getSSLValues() {
 }
 
 async function query(queryObject) {
-  // Usa um cliente do pool para executar a query
   const client = await getPool().connect();
   try {
     const result = await client.query(queryObject);
     return result;
   } catch (error) {
-    console.error("Erro ao executar query no banco:", error);
+    console.log("\n Erro ao executar query no database.js:", error);
+    console.error(error);
     throw error;
   } finally {
-    client.release();
+    await client?.end();
   }
 }
-// Cria um novo cliente do Postgres e conecta-se a ele
+
 async function getNewClient() {
   const client = new Client(getPoolConfig());
 
@@ -93,7 +93,6 @@ async function getNewClient() {
   return client;
 }
 
-// Executa uma funcao callback com um cliente do pool
 async function withClient(callback) {
   const client = await getPool().connect();
   try {
