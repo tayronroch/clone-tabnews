@@ -2,19 +2,12 @@ import migrationRunner from "node-pg-migrate";
 import { resolve } from "node:path";
 import database from "infra/database";
 
-import { InternalServerError, MethodNotAllowedError } from "infra/error.js";
-
 export default async function migrations(request, response) {
   const allowedMethods = ["GET", "POST"];
 
   if (!allowedMethods.includes(request.method)) {
-    const publicErrorObject = new MethodNotAllowedError({
-      message: `The HTTP method ${request.method} is not
-  allowed for this endpoint.`,
-    });
-    return response
-      .status(publicErrorObject.statusCode)
-      .json(publicErrorObject);
+    response.setHeader("Allow", allowedMethods);
+    return response.status(405).json({ error: "Method not allowed" });
   }
 
   const dbClient = await database.getNewClient();
@@ -33,6 +26,7 @@ export default async function migrations(request, response) {
         ...defaultMigrationsOptions,
         dryRun: true,
       });
+
       return response.status(200).json(result);
     }
 
@@ -41,14 +35,18 @@ export default async function migrations(request, response) {
         ...defaultMigrationsOptions,
         dryRun: false,
       });
+
       return response.status(result.length > 0 ? 201 : 200).json(result);
     }
   } catch (error) {
-    const publicErrorObject = new InternalServerError({ cause: error });
-    console.log("\nErro na rota de migrations:");
-    console.error(error);
-    console.error(publicErrorObject);
-    return response.status(500).json(publicErrorObject);
+    console.error("Erro na rota de migrations:", error);
+
+    const isProduction = process.env.NODE_ENV === "production";
+
+    return response.status(500).json({
+      error: isProduction ? "Internal server error" : error.message,
+      ...(isProduction ? {} : { stack: error.stack }),
+    });
   } finally {
     await dbClient.end();
   }
