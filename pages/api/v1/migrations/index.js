@@ -1,54 +1,57 @@
+import { createRouter } from "next-connect";
 import migrationRunner from "node-pg-migrate";
 import { resolve } from "node:path";
-import database from "infra/database";
+import database from "infra/database.js";
+import controller from "infra/controller.js";
 
-import { InternalServerError, MethodNotAllowedError } from "infra/error.js";
+const router = createRouter();
 
-export default async function migrations(request, response) {
-  const allowedMethods = ["GET", "POST"];
+router.get(getHandler);
+router.post(postHandler);
 
-  if (!allowedMethods.includes(request.method)) {
-    const publicErrorObject = new MethodNotAllowedError({
-      message: `The HTTP method ${request.method} is not
-  allowed for this endpoint.`,
-    });
-    return response
-      .status(publicErrorObject.statusCode)
-      .json(publicErrorObject);
-  }
+export default router.handler(controller.errorHandlers);
 
-  const dbClient = await database.getNewClient();
+const defaultMigrationOptions = {
+  dryRun: true,
+  dir: resolve("infra", "migrations"),
+  direction: "up",
+  verbose: true,
+  migrationsTable: "pgmigrations",
+};
+
+async function getHandler(request, response) {
+  let dbClient;
 
   try {
-    const defaultMigrationsOptions = {
+    dbClient = await database.getNewClient();
+
+    const pendingMigrations = await migrationRunner({
+      ...defaultMigrationOptions,
       dbClient,
-      dir: resolve("infra", "migrations"),
-      direction: "up",
-      verbose: true,
-      migrationsTable: "migrations",
-    };
+    });
+    return response.status(200).json(pendingMigrations);
+  } finally {
+    await dbClient.end();
+  }
+}
 
-    if (request.method === "GET") {
-      const result = await migrationRunner({
-        ...defaultMigrationsOptions,
-        dryRun: true,
-      });
-      return response.status(200).json(result);
+async function postHandler(request, response) {
+  let dbClient;
+
+  try {
+    dbClient = await database.getNewClient();
+
+    const migratedMigrations = await migrationRunner({
+      ...defaultMigrationOptions,
+      dbClient,
+      dryRun: false,
+    });
+
+    if (migratedMigrations.length > 0) {
+      return response.status(201).json(migratedMigrations);
     }
 
-    if (request.method === "POST") {
-      const result = await migrationRunner({
-        ...defaultMigrationsOptions,
-        dryRun: false,
-      });
-      return response.status(result.length > 0 ? 201 : 200).json(result);
-    }
-  } catch (error) {
-    const publicErrorObject = new InternalServerError({ cause: error });
-    console.log("\nErro na rota de migrations:");
-    console.error(error);
-    console.error(publicErrorObject);
-    return response.status(500).json(publicErrorObject);
+    return response.status(200).json(migratedMigrations);
   } finally {
     await dbClient.end();
   }
